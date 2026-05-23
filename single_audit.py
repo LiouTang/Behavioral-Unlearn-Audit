@@ -97,6 +97,13 @@ def main():
     dis_list = np.stack(dis_list)
     mem_list = np.stack(mem_list)
     non_list = np.stack(non_list)
+    with open(os.path.join(args.base_dir, f"all_logits_{target_idx}_{args.seed}.pkl"), "wb") as f:
+        pkl.dump({
+            "hon": hon_list,
+            "dis": dis_list,
+            "mem": mem_list,
+            "non": non_list,
+        }, f)
 
     rng = np.random.default_rng(args.seed)
     with open(os.path.join(args.base_dir, f"audit_results_{target_idx}_{args.seed}.csv"), "w") as f:
