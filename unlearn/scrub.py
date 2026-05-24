@@ -92,7 +92,7 @@ class SCRUB(UnlearnMethod):
                 loss = 0.99 * loss_cls + 0.001 * loss_div
             elif split == "max":
                 loss = -loss_div
-            loss = loss + param_dist(self.model_s, self.swa_model)
+            loss = self.eta * loss + param_dist(self.model_s, self.swa_model)
 
             optimizer.zero_grad()
             loss.backward()

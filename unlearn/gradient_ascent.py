@@ -17,7 +17,7 @@ class GradAscent(UnlearnMethod):
         self.momentum = 0.9
         self.weight_decay = 5e-4
         self.lr = 2e-4
-        self.epochs = 10
+        self.epochs = int(self.eta * 10)
 
         self.model.to(self.device)
         self.model.train()
