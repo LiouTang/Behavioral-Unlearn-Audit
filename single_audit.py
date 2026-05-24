@@ -19,6 +19,7 @@ def parse_args():
     parser.add_argument("--device",     type=str, default="cuda")
     parser.add_argument("--base_dir",   type=str, default=None, required=True)
 
+    parser.add_argument("--target_idx", type=int, default=None)
     parser.add_argument("--unlearn",    type=str, default="GradAscent")
     parser.add_argument("--eta",        type=float, default=0.1)
 
@@ -45,6 +46,12 @@ def get_un_model(i, loaders, orig_model, weight_path, args, eta):
         torch.save(model_un.state_dict(), weight_path)
         return model_un
 
+def search_target(dataset: IdxDataset, rng: np.random.Generator):
+    rt_idx_0 = utils.set_minus(dataset.idx_across_N[0], dataset.un_idx)
+    # print(rt_idx_0, dataset.full_set.targets[rt_idx_0], "|||", np.where(np.array(dataset.full_set.targets)[rt_idx_0] == 0))
+    target_idx = rng.choice(np.where(np.array(dataset.full_set.targets)[rt_idx_0] == 0)[0])
+    return target_idx
+
 def main():
     args = parse_args()
     with open(os.path.join(args.base_dir, "env_train.pkl"), "rb") as f:
@@ -54,7 +61,8 @@ def main():
     os.makedirs(os.path.join(args.base_dir, f"{args.unlearn}-{args.eta:.1f}"), exist_ok=True)
 
     # select z^* to ensure rho(z^* | D_u) --> 1
-    target_idx = 0 # TODO!!!!!!!
+    rng = np.random.default_rng(args.seed)
+    target_idx = args.target_idx if args.target_idx is not None else search_target(dataset, rng)
 
     # full range for possible T queries, collect all logits first and cut later to save space
     query_loader = DataLoader(dataset.valid_set, batch_size=env["args"].batch_size, shuffle=False, num_workers=0, pin_memory=True)
@@ -71,6 +79,7 @@ def main():
             "val": DataLoader(dataset.valid_set, batch_size=env["args"].batch_size, shuffle=False, num_workers=0, pin_memory=True),
         }
         model = get_model(env["args"].model, num_classes=dataset.num_classes)
+        print(f"Loaded model {i}")
 
         # honest unlearning
         model_un_hon = get_un_model(i, loaders, model, os.path.join(args.base_dir, f"{args.unlearn}-{1.0:.1f}", f"{i}.pth"), args, 1.0)
@@ -97,7 +106,7 @@ def main():
     dis_list = np.stack(dis_list)
     mem_list = np.stack(mem_list)
     non_list = np.stack(non_list)
-    with open(os.path.join(args.base_dir, f"all_logits_{target_idx}_{args.seed}.pkl"), "wb") as f:
+    with open(os.path.join(args.base_dir, f"all_logits_{args.unlearn}_{target_idx}_{args.seed}.pkl"), "wb") as f:
         pkl.dump({
             "hon": hon_list,
             "dis": dis_list,
@@ -105,8 +114,8 @@ def main():
             "non": non_list,
         }, f)
 
-    rng = np.random.default_rng(args.seed)
-    with open(os.path.join(args.base_dir, f"audit_results_{target_idx}_{args.seed}.csv"), "w") as f:
+    # rng = np.random.default_rng(args.seed)
+    with open(os.path.join(args.base_dir, f"audit_results_{args.unlearn}_{target_idx}_{args.seed}.csv"), "w") as f:
         f.write(f"T,alpha,alpha_prime,beta\n")
     for T in [10, 50, 100, 500]:
         for i in range(50):
@@ -118,7 +127,7 @@ def main():
             cur  = utils.LiR_test(mem_list[:,query_idx], non_list[:,query_idx], cov_mode="diag")
 
             alpha, alpha_prime, beta = comp["fnr"], comp["fpr"], cur["J"]
-            with open(os.path.join(args.base_dir, f"audit_results_{target_idx}_{args.seed}.csv"), "a") as f:
+            with open(os.path.join(args.base_dir, f"audit_results_{args.unlearn}_{target_idx}_{args.seed}.csv"), "a") as f:
                 f.write(f"{T},{alpha:.4f},{alpha_prime:.4f},{beta:.4f}\n")
 
             if i % 10 == 0:
