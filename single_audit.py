@@ -1,4 +1,5 @@
 import os
+import datetime
 import argparse
 import pickle as pkl
 import copy
@@ -24,11 +25,12 @@ def parse_args():
     parser.add_argument("--eta",        type=float, default=0.1)
 
     parser.add_argument("--seed",       type=int, default=0)
+    parser.add_argument("--overwrite",  action="store_true")
     return parser.parse_args()
 
 def get_un_model(i, loaders, orig_model, weight_path, args, eta):
     model = copy.deepcopy(orig_model)
-    if os.path.exists(weight_path):
+    if os.path.exists(weight_path) and not args.overwrite:
         model.load_state_dict(torch.load(weight_path))
         return model
     else:
@@ -106,28 +108,24 @@ def main():
     dis_list = np.stack(dis_list)
     mem_list = np.stack(mem_list)
     non_list = np.stack(non_list)
-    with open(os.path.join(args.base_dir, f"all_logits_{args.unlearn}_{target_idx}_{args.seed}.pkl"), "wb") as f:
-        pkl.dump({
-            "hon": hon_list,
-            "dis": dis_list,
-            "mem": mem_list,
-            "non": non_list,
-        }, f)
+
+    timestamp = datetime.datetime.now().strftime("%m%d-%H%M")
+    os.makedirs(os.path.join(args.base_dir, f"results_{timestamp}"), exist_ok=True)
+    with open(os.path.join(args.base_dir, f"results_{timestamp}", f"env_audit.pkl"), "wb") as f:
+        pkl.dump({"args": args, "env": env}, f)
 
     # rng = np.random.default_rng(args.seed)
-    with open(os.path.join(args.base_dir, f"audit_results_{args.unlearn}_{target_idx}_{args.seed}.csv"), "w") as f:
+    with open(os.path.join(args.base_dir, f"results_{timestamp}", f"audit_results.csv"), "w") as f:
         f.write(f"T,alpha,alpha_prime,beta\n")
-    for T in [10, 50, 100, 500]:
+    for T in [10, 50, 100, 500, 1000]:
         for i in range(50):
             query_idx = rng.choice(len(dataset.valid_set), T, replace=False)
-            # query_set = Subset(dataset.valid_set, rng.choice(len(dataset.valid_set), T, replace=False))
-            # query_loader = DataLoader(query_set, batch_size=env["args"].batch_size, shuffle=False, num_workers=0, pin_memory=True)
 
             comp = utils.LiR_test(dis_list[:,query_idx], hon_list[:,query_idx], cov_mode="diag")
             cur  = utils.LiR_test(mem_list[:,query_idx], non_list[:,query_idx], cov_mode="diag")
 
             alpha, alpha_prime, beta = comp["fnr"], comp["fpr"], cur["J"]
-            with open(os.path.join(args.base_dir, f"audit_results_{args.unlearn}_{target_idx}_{args.seed}.csv"), "a") as f:
+            with open(os.path.join(args.base_dir, f"results_{timestamp}", f"audit_results.csv"), "a") as f:
                 f.write(f"{T},{alpha:.4f},{alpha_prime:.4f},{beta:.4f}\n")
 
             if i % 10 == 0:

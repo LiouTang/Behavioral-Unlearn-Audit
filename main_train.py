@@ -31,6 +31,7 @@ def parse_args():
 
     parser.add_argument("--base_dir",       type=str, default="./save")
     parser.add_argument("--seed",           type=int, default=0)
+    parser.add_argument("--overwrite",      action="store_true")
     return parser.parse_args()
 
 def main():
@@ -48,6 +49,10 @@ def main():
         }, f)
 
     for i in range(args.N):
+        if os.path.exists(os.path.join(args.base_dir, "orig", f"{i}.pth")) and not args.overwrite:
+            print(f"Skip {i}")
+            continue
+
         train_set = dataset.get_subset(idx_across_N[i])
         train_loader = DataLoader(train_set, batch_size=args.batch_size, shuffle=True, num_workers=0, pin_memory=True)
 
