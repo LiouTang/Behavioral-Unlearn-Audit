@@ -112,13 +112,13 @@ def main():
     timestamp = datetime.datetime.now().strftime("%m%d-%H%M")
     os.makedirs(os.path.join(args.base_dir, f"results_{timestamp}"), exist_ok=True)
     with open(os.path.join(args.base_dir, f"results_{timestamp}", f"env_audit.pkl"), "wb") as f:
-        pkl.dump({"args": args, "env": env}, f)
+        pkl.dump({"args": args}, f)
 
     # rng = np.random.default_rng(args.seed)
     with open(os.path.join(args.base_dir, f"results_{timestamp}", f"audit_results.csv"), "w") as f:
         f.write(f"T,alpha,alpha_prime,beta\n")
-    for T in [10, 50, 100, 500, 1000]:
-        for i in range(50):
+    for T in range(1, 21):
+        for i in range(30):
             query_idx = rng.choice(len(dataset.valid_set), T, replace=False)
 
             comp = utils.LiR_test(dis_list[:,query_idx], hon_list[:,query_idx], cov_mode="diag")

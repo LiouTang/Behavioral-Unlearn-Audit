@@ -36,7 +36,7 @@ class GradAscent(UnlearnMethod):
                 loss.backward()
                 torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=1.0)
                 optimizer.step()
-            scheduler.step()
+                scheduler.step()
     
         _, rt_top1  = validate(self.model, rt_loader,   nn.CrossEntropyLoss(), self.device)
         _, un_top1  = validate(self.model, un_loader,   nn.CrossEntropyLoss(), self.device)
