@@ -15,22 +15,22 @@ import utils
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--device",         type=str, default="cuda")
+    parser.add_argument("--device",         type=str,   default="cuda")
 
-    parser.add_argument("--dataset",        type=str, default="CIFAR10")
-    parser.add_argument("--data_dir",       type=str, default="./data")
+    parser.add_argument("--dataset",        type=str,   default="CIFAR10")
+    parser.add_argument("--data_dir",       type=str,   default="./data")
 
-    parser.add_argument("--model",          type=str, default="ResNet18")
-    parser.add_argument("--N",              type=int, default=32)
-    parser.add_argument("--un_size",        type=int, default=1000)
+    parser.add_argument("--model",          type=str,   default="ResNet18")
+    parser.add_argument("--N",              type=int,   default=32)
+    parser.add_argument("--un_size",        type=int,   default=1000)
 
-    parser.add_argument("--batch_size",     type=int, default=128)
-    parser.add_argument("--num_epochs",     type=int, default=50)
+    parser.add_argument("--batch_size",     type=int,   default=128)
+    parser.add_argument("--num_epochs",     type=int,   default=50)
     parser.add_argument("--lr",             type=float, default=1e-3)
     parser.add_argument("--weight_decay",   type=float, default=1e-4)
 
-    parser.add_argument("--base_dir",       type=str, default="./save")
-    parser.add_argument("--seed",           type=int, default=0)
+    parser.add_argument("--base_dir",       type=str,   default="./save")
+    parser.add_argument("--seed",           type=int,   default=0)
     parser.add_argument("--overwrite",      action="store_true")
     return parser.parse_args()
 

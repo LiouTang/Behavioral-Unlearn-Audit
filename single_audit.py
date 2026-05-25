@@ -17,14 +17,15 @@ import utils
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--device",     type=str, default="cuda")
-    parser.add_argument("--base_dir",   type=str, default=None, required=True)
+    parser.add_argument("--device",     type=str,   default="cuda")
+    parser.add_argument("--base_dir",   type=str,   default=None, required=True)
 
-    parser.add_argument("--target_idx", type=int, default=None)
-    parser.add_argument("--unlearn",    type=str, default="GradAscent")
+    parser.add_argument("--target_idx", type=int,   default=None)
+    parser.add_argument("--unlearn",    type=str,   default="GradAscent")
     parser.add_argument("--eta",        type=float, default=0.1)
+    parser.add_argument("--T_max",      type=int,   default=50)
 
-    parser.add_argument("--seed",       type=int, default=0)
+    parser.add_argument("--seed",       type=int,   default=0)
     parser.add_argument("--overwrite",  action="store_true")
     return parser.parse_args()
 
@@ -112,12 +113,12 @@ def main():
     timestamp = datetime.datetime.now().strftime("%m%d-%H%M")
     os.makedirs(os.path.join(args.base_dir, f"results_{timestamp}"), exist_ok=True)
     with open(os.path.join(args.base_dir, f"results_{timestamp}", f"env_audit.pkl"), "wb") as f:
-        pkl.dump({"args": args}, f)
+        pkl.dump({"args": args, "target_idx": target_idx}, f)
 
     # rng = np.random.default_rng(args.seed)
     with open(os.path.join(args.base_dir, f"results_{timestamp}", f"audit_results.csv"), "w") as f:
         f.write(f"T,alpha,alpha_prime,beta\n")
-    for T in range(1, 21):
+    for T in range(1, args.T_max + 1):
         for i in range(30):
             query_idx = rng.choice(len(dataset.valid_set), T, replace=False)
 
