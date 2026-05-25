@@ -18,7 +18,7 @@ class DistillKL(nn.Module):
     def forward(self, y_s, y_t):
         p_s = F.log_softmax(y_s/self.T, dim=1)
         p_t = F.softmax(y_t/self.T, dim=1)
-        loss = F.kl_div(p_s, p_t, size_average=False) * (self.T**2) / y_s.shape[0]
+        loss = F.kl_div(p_s, p_t, reduction='batchmean') * (self.T**2)
         return loss
 
 def param_dist(model, swa_model, p=0.0):
@@ -54,7 +54,7 @@ class SCRUB(UnlearnMethod):
         self.module_list.to(self.device)
         self.swa_model.to(self.device)
 
-        for epoch in range(1, self.sgda_epochs + 1):
+        for epoch in range(self.sgda_epochs):
             if epoch <= self.msteps:
                 self._train_distill(epoch, un_loader, optimizer, "max")
             self._train_distill(epoch, rt_loader, optimizer, "min")
@@ -62,7 +62,7 @@ class SCRUB(UnlearnMethod):
             if epoch >= self.sstart:
                 self.swa_model.update_parameters(self.model_s)
 
-            scheduler.step(epoch)
+            scheduler.step()
 
         _, rt_top1  = validate(self.model_s, rt_loader,     nn.CrossEntropyLoss(), self.device)
         _, un_top1  = validate(self.model_s, un_loader,     nn.CrossEntropyLoss(), self.device)
@@ -92,7 +92,7 @@ class SCRUB(UnlearnMethod):
                 loss = 0.99 * loss_cls + 0.001 * loss_div
             elif split == "max":
                 loss = -loss_div
-            loss = self.eta * loss + param_dist(self.model_s, self.swa_model)
+            loss = self.eta * (loss + param_dist(self.model_s, self.swa_model))
 
             optimizer.zero_grad()
             loss.backward()
