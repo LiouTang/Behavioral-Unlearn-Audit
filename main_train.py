@@ -23,6 +23,7 @@ def parse_args():
     parser.add_argument("--model",          type=str,   default="ResNet18")
     parser.add_argument("--N",              type=int,   default=32)
     parser.add_argument("--un_size",        type=int,   default=1000)
+    parser.add_argument("--un_method",      type=str,   choices=["random", "class"], required=True)
 
     parser.add_argument("--batch_size",     type=int,   default=128)
     parser.add_argument("--num_epochs",     type=int,   default=50)
@@ -40,7 +41,7 @@ def main():
     os.makedirs(os.path.join(args.base_dir, "orig"), exist_ok=True)
 
     dataset = get_dataset(args.dataset, root=args.data_dir, seed=args.seed)
-    idx_across_N, _ = dataset.train_unlearn_split(args.N, args.un_size) # pre-split the dataset
+    idx_across_N, _ = dataset.train_unlearn_split(args.N, args.un_size, args.un_method) # pre-split the dataset
 
     with open(os.path.join(args.base_dir, "env_train.pkl"), "wb") as f:
         pkl.dump({

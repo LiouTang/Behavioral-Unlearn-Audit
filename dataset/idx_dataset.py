@@ -23,9 +23,12 @@ class IdxDataset(Dataset):
         new_set.targets = np.array(self.full_set.targets)[idx]
         return new_set
 
-    def train_unlearn_split(self, N: int, un_size: int):
-        class_0_idx = np.where(np.array(self.full_set.targets) == 0)[0]
-        self.un_idx = self.rng.choice(class_0_idx, un_size, replace=False) # sample unlearned set from one class
+    def train_unlearn_split(self, N: int, un_size: int, un_method: str="class"):
+        if un_method == "class":
+            class_0_idx = np.where(np.array(self.full_set.targets) == 0)[0]
+            self.un_idx = self.rng.choice(class_0_idx, un_size, replace=False) # sample unlearned set from one class
+        else:
+            self.un_idx = self.rng.choice(np.arange(len(self.full_set)), un_size, replace=False) # sample unlearned set randomly
 
         available = utils.set_minus(np.arange(len(self.full_set)), self.un_idx)
 
