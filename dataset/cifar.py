@@ -17,7 +17,7 @@ class IdxCIFAR10(IdxDataset):
         ])
         self.full_set   = CIFAR10(root=self.root, download=True, train=True, transform=t)
         self.valid_set  = CIFAR10(root=self.root, download=True, train=False, transform=t)
-        self.num_classes = len(self.full_set.classes)
+        self.num_classes = np.unique(self.full_set.targets).shape[0]
 
 class IdxCIFAR100(IdxDataset):
     def __init__(self, root, img_size: int=32, seed: int=None):
@@ -29,4 +29,4 @@ class IdxCIFAR100(IdxDataset):
         ])
         self.full_set   = CIFAR100(root=self.root, download=True, train=True, transform=t)
         self.valid_set  = CIFAR100(root=self.root, download=True, train=False, transform=t)
-        self.num_classes = len(self.full_set.classes)
+        self.num_classes = np.unique(self.full_set.targets).shape[0]
