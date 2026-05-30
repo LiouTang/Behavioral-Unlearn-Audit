@@ -3,11 +3,16 @@
 ## 1. Requirements
 
 ```
-PyTorch >= 2.5.0
+PyTorch >= 2.7.0
 cuda    >= 11.8.0
+numpy   >= 2.2.5
 ```
 
 ## 2. Usage
+
+### 2.0 Convex Cases
+
+To replicate Fig. 1, 2, 3, 5, 6, run the experiments from `standalone-convex` folder witht he default arguments.
 
 ### 2.1 Training
 
