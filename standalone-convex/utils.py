@@ -14,10 +14,6 @@ LIM = 4.0   # default 2-D grid half-extent
 # ---------------------------------------------------------------------------
 # Style
 # ---------------------------------------------------------------------------
-cmap_okabe_ito = matplotlib.colors.ListedColormap(
-    ["#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7"]
-)
-matplotlib.rcParams["axes.prop_cycle"] = matplotlib.cycler(color=cmap_okabe_ito.colors)
 cmap_T = LinearSegmentedColormap.from_list("white_red", ["#ffffff", "#0072B2"], N=256)
 
 
@@ -244,15 +240,6 @@ def setup_instance(seed, n_per=120, du_per_class=8, lam=LAM):
         theta_u_hon=theta + Delta,
         G_Du_w_norm=G_Du_w_norm, g_norms=g_norms, rhos=rhos,
     )
-
-
-def top_rho_idx(rhos, retained):
-    """Index of the retained sample with the highest |rho|."""
-    if retained.dtype != bool:
-        mask = np.zeros(len(rhos), dtype=bool)
-        mask[retained] = True
-        retained = mask
-    return int(np.argmax(np.where(retained, np.abs(rhos), -1.0)))
 
 
 def pick_zstars_by_rho(rhos, retained):

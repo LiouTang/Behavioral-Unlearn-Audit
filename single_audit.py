@@ -51,7 +51,6 @@ def get_un_model(i, loaders, orig_model, weight_path, args, eta):
 
 def search_target(dataset: IdxDataset, rng: np.random.Generator):
     rt_idx_0 = utils.set_minus(dataset.idx_across_N[0], dataset.un_idx)
-    # print(rt_idx_0, dataset.full_set.targets[rt_idx_0], "|||", np.where(np.array(dataset.full_set.targets)[rt_idx_0] == 0))
     target_idx = rng.choice(np.where(np.array(dataset.full_set.targets)[rt_idx_0] == 0)[0])
     return target_idx
 
@@ -63,7 +62,6 @@ def main():
     os.makedirs(os.path.join(args.base_dir, f"{args.unlearn}-{1.0:.1f}"), exist_ok=True)
     os.makedirs(os.path.join(args.base_dir, f"{args.unlearn}-{args.eta:.1f}"), exist_ok=True)
 
-    # select z^* to ensure rho(z^* | D_u) --> 1
     rng = np.random.default_rng(args.seed)
     target_idx = args.target_idx if args.target_idx is not None else search_target(dataset, rng)
 
@@ -88,7 +86,6 @@ def main():
         model_un_hon = get_un_model(i, loaders, model, os.path.join(args.base_dir, f"{args.unlearn}-{1.0:.1f}", f"{i}.pth"), args, 1.0)
         model_un_hon.to(args.device)
         logits_un_hon = utils.get_logit(model_un_hon, query_loader, args.device)
-        # return
         # dishonest unlearning
         model_un_dis = get_un_model(i, loaders, model, os.path.join(args.base_dir, f"{args.unlearn}-{args.eta:.1f}", f"{i}.pth"), args, args.eta)
         model_un_dis.to(args.device)

@@ -66,13 +66,13 @@ def main():
     idx_Du = inst["idx_Du"]
     G_Du_w_norm, g_norms, rhos = inst["G_Du_w_norm"], inst["g_norms"], inst["rhos"]
 
-    z_idx = utils.top_rho_idx(rhos, inst["retained"])
-    rho_z, g_n = rhos[z_idx], g_norms[z_idx]
+    z = utils.pick_zstars_by_rho(rhos, inst["retained"])[0]
+    rho_z, g_n = rhos[z], g_norms[z]
     kappa_z = abs(rho_z) * g_n / G_Du_w_norm
-    print(f"z*={z_idx}, rho={rho_z:+.3f}, ||g||_w={g_n:.4f}, "
+    print(f"z*={z}, rho={rho_z:+.3f}, ||g||_w={g_n:.4f}, "
           f"||G_Du||_w={G_Du_w_norm:.4f}, kappa(eta=0)={kappa_z:.4f}")
 
-    theta_u_mem, theta_u_non = utils.models_mem_vs_non(X, y, idx_Du.tolist(), z_idx)
+    theta_u_mem, theta_u_non = utils.models_mem_vs_non(X, y, idx_Du.tolist(), z)
 
     # Scalar signals at a 120×120 grid (class-0 posterior difference)
     xs = np.linspace(-utils.LIM, utils.LIM, 120)

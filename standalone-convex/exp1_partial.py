@@ -22,8 +22,7 @@ def main():
     idx_Du = inst["idx_Du"]
     G_Du_w_norm, g_norms, rhos = inst["G_Du_w_norm"], inst["g_norms"], inst["rhos"]
 
-    zs = utils.pick_zstars_by_rho(rhos, inst["retained"])
-    z = zs[0]  # pick single z* with highest positive |rho|
+    z = utils.pick_zstars_by_rho(rhos, inst["retained"])[0]
     rho_z = rhos[z]
     eta = 0.0
 
