@@ -12,15 +12,27 @@ numpy   >= 2.2.5
 
 ### 2.0 Convex Cases
 
-To replicate Fig. 1, 2, 3, 5, 6, run the experiments from `standalone-convex` folder witht he default arguments.
+To replicate Fig. 1, 2, 3, 5, 6, run the experiments from `standalone-convex` folder with the default arguments.
 
 ### 2.1 Training
 
-To train all `N` surrogate models, run: `python main_train.py --arguments`.
+To train all `N` surrogate models, run:
+```
+python main_train.py --dataset {dataset} --model {model} --N {N} --un_size {size of D_u} --un_method {random / class}
+                     --batch_size {batch size} --num_epochs {training epochs} --lr {learning rate} --weight_decay {weight decay}
+                     --base_dir {path to where the training environment will be stored} --seed {seed for reproducibility}
+                     --overwrite {overwrite trained models to start fresh}
+```
 
 ### 2.2 Auditing
 
-To perform the (behavioral) audit, run: `python single_audit.py --base_dir {path to where the training environment will be stored} --unlearn {MU method} --eta {honesty level}`
+To perform the (behavioral) audit, run:
+```
+python single_audit.py --base_dir {path to where the training environment will be stored}
+                       --target_idx {OPTIONAL, id of target z^*} --unlearn {MU method}
+                       --eta {honesty level} --T_max {maximum query budget}
+                       --seed {seed for reproducibility} --overwrite {overwrite unlearned models to start fresh}
+```
 
 You can specify `--seed` to ensure reproducibility
 
