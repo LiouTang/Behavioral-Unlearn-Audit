@@ -10,10 +10,6 @@ numpy   >= 2.2.5
 
 ## 2. Usage
 
-### 2.0 Convex Cases
-
-To replicate Fig. 1, 2, 3, 5, 6, run the experiments from `standalone-convex` folder with the default arguments.
-
 ### 2.1 Training
 
 To train all `N` surrogate models, run:
@@ -35,6 +31,10 @@ python single_audit.py --base_dir {path to where the training environment will b
 ```
 
 You can specify `--seed` to ensure reproducibility
+
+### 2.3 Convex Models
+
+To replicate Figs on convex models, run the experiments from `standalone-convex` folder with the default arguments.
 
 ## 3. Acknowledgements
 

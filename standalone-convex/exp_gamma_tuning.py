@@ -251,36 +251,39 @@ def plot_all(er, tr, dr, out):
     x = np.array([r["eta"] for r in er])
     g = np.array([r["gamma"] for r in er])
     l = np.array([r["lambda_conv"] for r in er])
-    a.plot(x, g, marker="o", ms=3.5, lw=1.8, label=r"exact $\gamma_Q$")
-    a.plot(x, l, "--", lw=1.8, label=r"proxy $\lambda_Q^{\rm conv}$")
+    a.plot(x, g, color="#0072B2", lw=5, ms=12, marker="o", markeredgecolor="white", label=r"Exact $\gamma_Q(\eta)$")
+    a.plot(x, l, color="k", linestyle="--", lw=5, label=r"Proxy $\lambda_Q^{\rm conv}(\eta)$")
     a.set_yscale("log")
-    a.set_xlabel(r"honesty level $\eta$", fontsize=24)
-    a.set_ylabel(r"alignment coefficient", fontsize=24)
+    a.set_xlabel(r"Honesty level $\eta$", fontsize=24)
+    a.set_ylabel(r"Alignment coefficient", fontsize=24)
     a.grid(alpha=0.25)
-    a.legend(fontsize=24)
+    a.legend(fontsize=24, loc="upper left")
     pdf = os.path.join(out, "gamma_tuning_eta.pdf")
     fig.savefig(pdf, dpi=300, bbox_inches=None)
     plt.close(fig)
     outputs.append(pdf)
 
     # Plot the retained-target distribution.
+    cmap = plt.cm.plasma
+    T = 4
+    t_colors = {t: cmap(i / max(len(range(T)) - 1, 1)) for i, t in enumerate(range(T))}
     fig, a = utils.single_ax_fig()
     g = np.array([r["gamma"] for r in tr])
     upper = max(np.quantile(g, 0.995) * 1.05, 1e-6)
     bins = np.linspace(0, upper, 22)
-    a.hist(g, bins=bins, density=True, alpha=0.3, edgecolor="black", linewidth=0.4)
+    a.hist(g, bins=bins, density=True, alpha=0.2, color="#0072B2", edgecolor="k", lw=0.25)
     med, p90, p99 = np.quantile(g, [0.5, 0.9, 0.99])
-    for val, lab in [
+    for i, (val, lab) in enumerate([
         (med, f"median={med:.3f}"),
         (p90, rf"$\gamma_Q$ @ 90%={p90:.3f}"),
         (p99, rf"$\gamma_Q$ @ 99%={p99:.3f}"),
-    ]:
-        a.axvline(val, ls="--", lw=1.8, label=lab)
+    ]):
+        a.axvline(val, ls="--", lw=5, label=lab, color=t_colors[i])
     a.set_yscale("log")
     a.set_xlabel(r"$\gamma_Q(z^*)$", fontsize=24)
     a.set_ylabel("density", fontsize=24)
     a.grid(alpha=0.25)
-    a.legend(fontsize=24)
+    a.legend(fontsize=24, loc="upper right")
     pdf = os.path.join(out, "gamma_tuning_targets.pdf")
     fig.savefig(pdf, dpi=300, bbox_inches=None)
     plt.close(fig)
@@ -290,23 +293,14 @@ def plot_all(er, tr, dr, out):
     fig, a = utils.single_ax_fig()
     q = grouped_quantiles(dr, "du_frac", "gamma")
     x = np.array([r["x"] for r in q])
-    a.plot(x, [r["median"] for r in q], marker="o", ms=3.5, lw=1.7, label="median")
-    a.plot(
-        x, [r["p90"] for r in q], marker="s", ms=3.2, lw=1.5, label=r"$\gamma_Q$ @ 90%"
-    )
-    a.plot(
-        x, [r["p99"] for r in q], marker="^", ms=3.2, lw=1.5, label=r"$\gamma_Q$ @ 99%"
-    )
-    # Fit an inverse-size reference to the 90th percentile.
-    y = np.array([r["p90"] for r in q])
-    z = 1 / np.maximum(x, 1e-12)
-    c = float(y @ z / (z @ z))
-    a.plot(x, c / x, "k--", lw=1.3, label=r"fitted $\propto1/|D_u|$")
+    a.plot(x, [r["median"] for r in q], c=t_colors[0], lw=4, marker="o", ms=12, markeredgecolor="white", label="median")
+    a.plot(x, [r["p90"] for r in q],    c=t_colors[1], lw=4, marker="s", ms=12, markeredgecolor="white", label=r"$\gamma_Q$ @ 90%")
+    a.plot(x, [r["p99"] for r in q],    c=t_colors[2], lw=4, marker="^", ms=12, markeredgecolor="white", label=r"$\gamma_Q$ @ 99%")
     a.set_yscale("log")
     a.set_xlabel(r"$|D_u|/|D|$", fontsize=24)
     a.set_ylabel(r"$\gamma_Q(D_u)$", fontsize=24)
     a.grid(alpha=0.25)
-    a.legend(fontsize=24)
+    a.legend(fontsize=24, loc="upper right")
     pdf = os.path.join(out, "gamma_tuning_du_size.pdf")
     fig.savefig(pdf, dpi=300, bbox_inches=None)
     plt.close(fig)
