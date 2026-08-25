@@ -69,6 +69,8 @@ def main():
     query_loader = DataLoader(dataset.valid_set, batch_size=env["args"].batch_size, shuffle=False, num_workers=0, pin_memory=True)
 
     hon_list, dis_list, mem_list, non_list = [], [], [], []
+    member_mask = []
+
     # run honest and dishonest unlearning
     for i in range(env["args"].N):
         un_set = dataset.get_subset(dataset.un_idx)

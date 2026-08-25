@@ -122,6 +122,7 @@ def plot_conditional_shift(
 def plot_theoretical_reference(
     df, ax,
     x: str = "e_ref", y: str = "beta_ref", t: str = "T",
+    label: str = "Gaussian reference",
     line_kwargs: dict | None = None,
     marker_kwargs: dict | None = None,
 ):
@@ -145,7 +146,7 @@ def plot_theoretical_reference(
         "linestyle": "--",
         "linewidth": 3,
         "zorder": 7,
-        "label": "Gaussian reference",
+        "label": label,
         **(line_kwargs or {}),
     }
     mk = {
@@ -185,8 +186,15 @@ def main():
             if os.path.exists(theory_path):
                 theory_df = pd.read_csv(theory_path)
                 plot_theoretical_reference(
-                    theory_df, ax, x="e_ref", y="beta_ref", t="T"
+                    theory_df, ax, x="e_ref", y="beta_ref", t="T", label=r"$\beta_{\mathrm{ref}}$",
+                    line_kwargs={"color":"deepskyblue"}, marker_kwargs={"color":"deepskyblue", "edgecolor": "w"}
                 )
+                plot_theoretical_reference(
+                    theory_df, ax, x="e_ref", y="beta_lb_ref", t="T", label=r"$\beta_{\mathrm{LB}}$",
+                    line_kwargs={"color":"yellowgreen"}, marker_kwargs={"color":"yellowgreen", "edgecolor": "w"}
+                )
+                # theory_df["R_perp"] = theory_df["p_perp_ref_norm"] ** 2 / np.maximum(theory_df["d_cur_ref"] ** 2, 1e-12)
+                # print(theory_df.groupby("T")["R_perp"].agg(["mean", "std"]))
                 ax.legend(
                     loc="upper right",
                     framealpha=0.25,
@@ -200,7 +208,11 @@ def main():
 
             with open(os.path.join(args.base_dir, folder, "env_audit.pkl"), "rb") as f:
                 env_audit = pd.read_pickle(f)
-            plt.savefig(os.path.join(args.base_dir, f"{env_audit['args'].unlearn}_{env_audit['args'].eta}.pdf"), dpi=300, bbox_inches=None)
+
+            fig_path = os.path.join(args.base_dir, "Figs")
+            if not os.path.exists(fig_path):
+                os.mkdir(fig_path)
+            plt.savefig(os.path.join(fig_path, f"{env_audit['args'].unlearn}_{env_audit['args'].eta}.pdf"), dpi=300, bbox_inches=None)
             # plt.show()
             # exit(0)
 
