@@ -27,11 +27,8 @@ def single_ax_fig(margin=(1.0, 1.0), ax_size=(6.9, 6.9)):
 
 
 def plot_conditional_shift(
-    df,
-    ax,
-    x: str = "a",
-    y: str = "b",
-    t: str = "T",
+    df, ax,
+    x: str = "a", y: str = "b", t: str = "T",
     nsig: float = 1.0,
     ellipse_stride: int = 2,
     cmap="plasma",
@@ -122,6 +119,55 @@ def plot_conditional_shift(
     out = {"bin_centers": centers, "mu": mus, "Sigma": covs}
     return out
 
+def plot_theoretical_reference(
+    df, ax,
+    x: str = "e_ref", y: str = "beta_ref", t: str = "T",
+    line_kwargs: dict | None = None,
+    marker_kwargs: dict | None = None,
+):
+    """
+    Overlay the shared-covariance Gaussian reference trajectory.
+
+    Each point is the empirical mean of (x, y) over repeated query
+    sequences at a fixed query budget T.
+    """
+    sub = df[[x, y, t]].dropna()
+
+    centers, mus = [], []
+    for ti, g in sub.groupby(t, sort=True):
+        centers.append(float(ti))
+        mus.append(g[[x, y]].to_numpy().mean(axis=0))
+
+    centers = np.asarray(centers)
+    mus = np.asarray(mus).reshape(-1, 2)
+
+    lk = {
+        "linestyle": "--",
+        "linewidth": 3,
+        "zorder": 7,
+        "label": "Gaussian reference",
+        **(line_kwargs or {}),
+    }
+    mk = {
+        "s": 90,
+        "marker": "o",
+        "zorder": 8,
+        **(marker_kwargs or {}),
+    }
+
+    if len(centers) >= 2:
+        ax.plot(mus[:, 0], mus[:, 1], **lk)
+        ax.scatter(mus[:, 0], mus[:, 1], **mk)
+    elif len(centers) == 1:
+        ax.scatter(
+            mus[:, 0],
+            mus[:, 1],
+            label=lk["label"],
+            **mk,
+        )
+
+    return {"bin_centers": centers, "mu": mus}
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--base_dir", type=str, default=None, required=True)
@@ -134,6 +180,20 @@ def main():
             df = pd.read_csv(os.path.join(args.base_dir, folder, "audit_results.csv"))
             df["a_a"] = df["alpha"] + df["alpha_prime"]
             plot_conditional_shift(df, ax, x="a_a", y="beta", t="T", cmap="plasma")
+
+            theory_path = os.path.join(args.base_dir, folder, "theory_results.csv")
+            if os.path.exists(theory_path):
+                theory_df = pd.read_csv(theory_path)
+                plot_theoretical_reference(
+                    theory_df, ax, x="e_ref", y="beta_ref", t="T"
+                )
+                ax.legend(
+                    loc="upper right",
+                    framealpha=0.25,
+                    fontsize=24,
+                    facecolor="lightgray",
+                )
+
             ax.set_xlim(0.0, 1.0)
             ax.set_ylim(0.0, 1.0)
             ax.grid(True, which="both", linestyle="--", alpha=0.3)
