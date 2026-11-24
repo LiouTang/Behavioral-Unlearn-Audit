@@ -136,18 +136,17 @@ def theory_reference_geometry(hon_list, dis_list, member_mask, query_idx, eps=1e
     Compute the non-convex behavioral geometry and a shared-diagonal-
     covariance Gaussian reference for one query sequence Q.
 
-    This function DOES NOT add observation noise. It uses:
-      1. the mean behavioral shifts exposed by the saved surrogate models;
-      2. within-cell surrogate variability to define a common diagonal
-         covariance reference model.
+    This function does not add observation noise. It uses the supplied
+    fitting transcripts and within-cell variability to define a common
+    diagonal covariance reference model.
 
     Parameters
     ----------
     hon_list : array, shape [N, num_available_queries]
-        Honest-unlearning target-class logits for each surrogate model.
+        Flattened reference-schedule transcripts for each fitting model.
 
     dis_list : array, shape [N, num_available_queries]
-        Dishonest-unlearning target-class logits for each surrogate model.
+        Flattened alternative-schedule transcripts for each fitting model.
 
     member_mask : bool array, shape [N]
         True when z* belongs to the retained set for that surrogate.
@@ -180,7 +179,7 @@ def theory_reference_geometry(hon_list, dis_list, member_mask, query_idx, eps=1e
     The operational audit fits separate diagonal covariances to the two
     hypotheses. The reference quantities below deliberately impose one
     pooled diagonal covariance, so beta_ref/beta_lb_ref are clean
-    Gaussian-geometric reference values rather than aliases for beta_op.
+    Gaussian-geometric reference values rather than measured attack advantage.
     """
     H = np.asarray(hon_list, dtype=np.float64)[:, query_idx]
     D = np.asarray(dis_list, dtype=np.float64)[:, query_idx]
@@ -231,16 +230,10 @@ def theory_reference_geometry(hon_list, dis_list, member_mask, query_idx, eps=1e
     p_dis = mu_dm - mu_dn
 
     # ------------------------------------------------------------------
-    # Operational mean shifts.
-    #
-    # c_op is exactly the mean shift in the honest-vs-dishonest
-    # populations passed to LiR_test.
-    #
-    # p_op equals the member-vs-nonmember mean shift because the original
-    # code contributes one honest and one dishonest endpoint per surrogate
-    # to the corresponding membership population.
+    # Balanced four-cell contrasts from the paper's fitted reference.
+    # Equal weights prevent membership-count imbalance from changing c_op.
     # ------------------------------------------------------------------
-    c_op = H.mean(axis=0) - D.mean(axis=0)
+    c_op = 0.5 * (c_mem + c_non)
     p_op = 0.5 * (p_hon + p_dis)
 
     c_norm = float(np.linalg.norm(c_op))
@@ -251,7 +244,7 @@ def theory_reference_geometry(hon_list, dis_list, member_mask, query_idx, eps=1e
     # ------------------------------------------------------------------
     # Balanced 2 x 2 main-effect diagnostic.
     #
-    # c_balanced removes any effect of unequal member/nonmember counts.
+    # Keep the existing balanced diagnostic columns for saved-result readers.
     # The interaction is zero when the compliance displacement is the
     # same under membership and nonmembership.
     # ------------------------------------------------------------------
@@ -274,8 +267,7 @@ def theory_reference_geometry(hon_list, dis_list, member_mask, query_idx, eps=1e
     # Shared diagonal residual covariance.
     #
     # Remove the four cell means first, then pool the residual variance.
-    # This captures surrogate/training variability without injecting
-    # artificial observation noise.
+    # This captures within-cell variability in the supplied transcripts.
     # ------------------------------------------------------------------
     residual_ss = np.zeros(H.shape[1], dtype=np.float64)
     residual_dof = 0
@@ -337,7 +329,7 @@ def theory_reference_geometry(hon_list, dis_list, member_mask, query_idx, eps=1e
         "n_mem": int(n_mem),
         "n_non": int(n_non),
 
-        # Raw behavioral geometry, directly in target-logit space.
+        # Raw behavioral geometry, directly in transcript space.
         "c_norm": c_norm,
         "p_norm": p_norm,
         "gamma": raw_geom["gamma"],

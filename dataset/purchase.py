@@ -30,5 +30,9 @@ class IdxPurchase100(IdxDataset):
     def __init__(self, root, seed: int=None):
         super().__init__(root=root, seed=seed)
         self.full_set    = Purchase100(root=self.root)
-        self.valid_set   = self.full_set
+        source_idx = self.rng.permutation(len(self.full_set))
+        self.valid_source_idx = source_idx[:10000]
+        self.train_source_idx = source_idx[10000:]
+        self.valid_set   = self.get_subset(self.valid_source_idx)
+        self.full_set    = self.get_subset(self.train_source_idx)
         self.num_classes = np.unique(self.full_set.targets).shape[0]

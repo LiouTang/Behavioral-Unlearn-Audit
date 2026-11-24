@@ -49,11 +49,15 @@ def main():
             "dataset": dataset,
         }, f)
 
+    valid_loader = DataLoader(dataset.valid_set, batch_size=args.batch_size, shuffle=False, num_workers=0, pin_memory=True)
+
     for i in range(args.N):
         if os.path.exists(os.path.join(args.base_dir, "orig", f"{i}.pth")) and not args.overwrite:
             print(f"Skip {i}")
             continue
 
+        torch.manual_seed(args.seed + i)
+        np.random.seed(args.seed + i)
         train_set = dataset.get_subset(idx_across_N[i])
         train_loader = DataLoader(train_set, batch_size=args.batch_size, shuffle=True, num_workers=0, pin_memory=True)
 
@@ -65,7 +69,7 @@ def main():
         best_top1 = 0.0
         for epoch in (pbar := tqdm(range(args.num_epochs), desc=str(i).zfill(3))):
             _, _ = train(model, train_loader, loss_fn, optimizer, args.device)
-            losses, top1 = validate(model, train_loader, loss_fn, args.device)
+            losses, top1 = validate(model, valid_loader, loss_fn, args.device)
             pbar.set_postfix({"loss": losses.avg, "top1": top1.avg})
             if top1.avg > best_top1:
                 best_top1 = top1.avg

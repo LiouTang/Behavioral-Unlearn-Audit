@@ -114,7 +114,7 @@ def plot_conditional_shift(
     ax.legend(loc="upper right", framealpha=0.25, fontsize=24, facecolor="lightgray")
 
     ax.set_xlabel(r"Compliance error $\alpha + \alpha^\prime$", fontsize=24)
-    ax.set_ylabel(r"Curiosity advantage $\beta$", fontsize=24)
+    ax.set_ylabel("Empirical membership advantage", fontsize=24)
 
     out = {"bin_centers": centers, "mu": mus, "Sigma": covs}
     return out
@@ -186,11 +186,11 @@ def main():
             if os.path.exists(theory_path):
                 theory_df = pd.read_csv(theory_path)
                 plot_theoretical_reference(
-                    theory_df, ax, x="e_ref", y="beta_ref", t="T", label=r"$\beta_{\mathrm{ref}}$",
+                    theory_df, ax, x="e_ref", y="beta_ref", t="T", label=r"Fitted $\beta_{\mathrm{ref}}$",
                     line_kwargs={"color":"deepskyblue"}, marker_kwargs={"color":"deepskyblue", "edgecolor": "w"}
                 )
                 plot_theoretical_reference(
-                    theory_df, ax, x="e_ref", y="beta_lb_ref", t="T", label=r"$\beta_{\mathrm{LB}}$",
+                    theory_df, ax, x="e_ref", y="beta_lb_ref", t="T", label="Gaussian transfer diagnostic",
                     line_kwargs={"color":"yellowgreen"}, marker_kwargs={"color":"yellowgreen", "edgecolor": "w"}
                 )
                 # theory_df["R_perp"] = theory_df["p_perp_ref_norm"] ** 2 / np.maximum(theory_df["d_cur_ref"] ** 2, 1e-12)
@@ -202,8 +202,8 @@ def main():
                     facecolor="lightgray",
                 )
 
-            ax.set_xlim(0.0, 1.0)
-            ax.set_ylim(0.0, 1.0)
+            ax.set_xlim(0.0, 2.0)
+            ax.set_ylim(-1.0, 1.0)
             ax.grid(True, which="both", linestyle="--", alpha=0.3)
 
             with open(os.path.join(args.base_dir, folder, "env_audit.pkl"), "rb") as f:

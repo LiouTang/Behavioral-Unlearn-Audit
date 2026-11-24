@@ -35,7 +35,7 @@ class IdxDataset(Dataset):
         train_idx_across_N = []
         for i in range(N):
             idx = self.rng.choice(available, int(len(available) / 2), replace=False)
-            train_idx_across_N.append(idx)
+            train_idx_across_N.append(np.concatenate((self.un_idx, idx)))
 
         self.idx_across_N = np.array(train_idx_across_N)
         return self.idx_across_N, self.un_idx
