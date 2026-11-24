@@ -12,6 +12,7 @@ from matplotlib.colors import LinearSegmentedColormap
 from mpl_toolkits.axes_grid1 import Divider, Size
 from matplotlib.patches import Ellipse
 from matplotlib import cm, colors
+from plot_mediation import plot_results as plot_mediated_results
 
 def single_ax_fig(margin=(1.0, 1.0), ax_size=(6.9, 6.9)):
     """Return (fig, ax) using a fixed-size Divider layout."""
@@ -111,10 +112,10 @@ def plot_conditional_shift(
     for t in np.unique(T):
         if t % 10 == 0:
             ax.scatter([], [], s=60, color=cmap(norm(t)), label=f"T={t}")
-    ax.legend(loc="upper right", framealpha=0.25, fontsize=24, facecolor="lightgray")
+    ax.legend(loc="upper right", framealpha=0.25, fontsize=12, facecolor="lightgray")
 
-    ax.set_xlabel(r"Compliance error $\alpha + \alpha^\prime$", fontsize=24)
-    ax.set_ylabel("Empirical membership advantage", fontsize=24)
+    ax.set_xlabel(r"Compliance error $\alpha + \alpha^\prime$", fontsize=16)
+    ax.set_ylabel("Empirical membership advantage", fontsize=16)
 
     out = {"bin_centers": centers, "mu": mus, "Sigma": covs}
     return out
@@ -171,50 +172,71 @@ def plot_theoretical_reference(
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--base_dir", type=str, default=None, required=True)
+    parser.add_argument("--base_dir", "--result_dir", dest="base_dir", required=True,
+                        help="Training environment or a single audit result directory.")
+    parser.add_argument("--T", type=int, default=None,
+                        help="Query budget for mediation snapshots; default: largest saved T.")
     args = parser.parse_args()
-    # go through all sub-folders with name that start with "results_":
-    for folder in os.listdir(args.base_dir):
-        # if not .zip
-        if folder.startswith("results_") and not folder.endswith(".zip"):
-            fig, ax = single_ax_fig(margin=(1.0, 1.0), ax_size=(6.9, 6.9))
-            df = pd.read_csv(os.path.join(args.base_dir, folder, "audit_results.csv"))
-            df["a_a"] = df["alpha"] + df["alpha_prime"]
-            plot_conditional_shift(df, ax, x="a_a", y="beta", t="T", cmap="plasma")
+    base_dir = os.path.abspath(args.base_dir)
+    if os.path.isfile(os.path.join(base_dir, "audit_results.csv")):
+        result_dirs = [base_dir]
+    else:
+        result_dirs = [
+            os.path.join(base_dir, folder) for folder in sorted(os.listdir(base_dir))
+            if folder.startswith(("results_", "mediated_results_"))
+            and os.path.isdir(os.path.join(base_dir, folder))
+        ]
+    print(f"Plotting {len(result_dirs)} result folder(s) from {base_dir}")
 
-            theory_path = os.path.join(args.base_dir, folder, "theory_results.csv")
-            if os.path.exists(theory_path):
-                theory_df = pd.read_csv(theory_path)
-                plot_theoretical_reference(
-                    theory_df, ax, x="e_ref", y="beta_ref", t="T", label=r"Fitted $\beta_{\mathrm{ref}}$",
-                    line_kwargs={"color":"deepskyblue"}, marker_kwargs={"color":"deepskyblue", "edgecolor": "w"}
-                )
-                plot_theoretical_reference(
-                    theory_df, ax, x="e_ref", y="beta_lb_ref", t="T", label="Gaussian transfer diagnostic",
-                    line_kwargs={"color":"yellowgreen"}, marker_kwargs={"color":"yellowgreen", "edgecolor": "w"}
-                )
-                # theory_df["R_perp"] = theory_df["p_perp_ref_norm"] ** 2 / np.maximum(theory_df["d_cur_ref"] ** 2, 1e-12)
-                # print(theory_df.groupby("T")["R_perp"].agg(["mean", "std"]))
-                ax.legend(
-                    loc="upper right",
-                    framealpha=0.25,
-                    fontsize=24,
-                    facecolor="lightgray",
-                )
+    for result_dir in result_dirs:
+        df = pd.read_csv(os.path.join(result_dir, "audit_results.csv"))
+        is_mediated = "policy_id" in df.columns
+        if is_mediated:
+            # The original tradeoff curve must not pool different channels.
+            df = df[df["policy_id"] == "unmediated"].copy()
+        fig, ax = single_ax_fig(margin=(1.0, 1.0), ax_size=(6.9, 6.9))
+        df["a_a"] = df["alpha"] + df["alpha_prime"]
+        plot_conditional_shift(df, ax, x="a_a", y="beta", t="T", cmap="plasma")
 
-            ax.set_xlim(0.0, 2.0)
-            ax.set_ylim(-1.0, 1.0)
-            ax.grid(True, which="both", linestyle="--", alpha=0.3)
+        theory_path = os.path.join(result_dir, "theory_results.csv")
+        if os.path.exists(theory_path):
+            theory_df = pd.read_csv(theory_path)
+            plot_theoretical_reference(
+                theory_df, ax, x="e_ref", y="beta_ref", t="T", label=r"Fitted $\beta_{\mathrm{ref}}$",
+                line_kwargs={"color":"deepskyblue"}, marker_kwargs={"color":"deepskyblue", "edgecolor": "w"}
+            )
+            plot_theoretical_reference(
+                theory_df, ax, x="e_ref", y="beta_lb_ref", t="T", label="Gaussian transfer diagnostic",
+                line_kwargs={"color":"yellowgreen"}, marker_kwargs={"color":"yellowgreen", "edgecolor": "w"}
+            )
+            ax.legend(
+                loc="upper right",
+                framealpha=0.25,
+                fontsize=12,
+                facecolor="lightgray",
+            )
 
-            with open(os.path.join(args.base_dir, folder, "env_audit.pkl"), "rb") as f:
+        ax.set_xlim(0.0, 1.0)
+        ax.set_ylim(0.0, 1.0)
+        ax.grid(True, which="both", linestyle="--", alpha=0.3)
+
+        if is_mediated:
+            fig_path = os.path.join(result_dir, "figures")
+            fig_name = "audit_tradeoff"
+        else:
+            with open(os.path.join(result_dir, "env_audit.pkl"), "rb") as f:
                 env_audit = pd.read_pickle(f)
-
-            fig_path = os.path.join(args.base_dir, "Figs")
-            if not os.path.exists(fig_path):
-                os.mkdir(fig_path)
-            plt.savefig(os.path.join(fig_path, f"{env_audit['args'].unlearn}_{env_audit['args'].eta}.pdf"), dpi=300, bbox_inches=None)
-            # plt.show()
-            # exit(0)
+            fig_path = os.path.join(os.path.dirname(result_dir), "Figs")
+            fig_name = f"{env_audit['args'].unlearn}_{env_audit['args'].eta}"
+        os.makedirs(fig_path, exist_ok=True)
+        fig.savefig(os.path.join(fig_path, fig_name + ".pdf"), dpi=300, bbox_inches="tight")
+        if is_mediated:
+            fig.savefig(os.path.join(fig_path, fig_name + ".png"), dpi=200, bbox_inches="tight")
+        plt.close(fig)
+        print(f"Saved tradeoff plot to {os.path.join(fig_path, fig_name + '.pdf')}")
+        if is_mediated:
+            plot_mediated_results(result_dir, args.T)
+            print(f"Saved mediation figures under {fig_path}")
 
 
 if __name__ == "__main__":
