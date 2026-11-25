@@ -216,8 +216,8 @@ def main():
                 facecolor="lightgray",
             )
 
-        ax.set_xlim(0.0, 1.0)
-        ax.set_ylim(0.0, 1.0)
+        ax.set_xlim(0.0, 2.0)
+        ax.set_ylim(-1.0, 1.0)
         ax.grid(True, which="both", linestyle="--", alpha=0.3)
 
         if is_mediated:
