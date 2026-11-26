@@ -165,6 +165,14 @@ This is an offline trusted experiment evaluator, not a deployed mediator access-
 
 Treat every policy/repetition as a separate experimental audit. Releasing several sweeps, repetitions, or the baseline together to one auditor would require joint privacy accounting; a single-batch certificate does not cover that combined transcript. Saved experimental artifacts are not a claim that those releases can safely be combined.
 
+For noise-response panels assembled from the paper's evidence folders, run:
+
+```bash
+python plot_noise_tradeoff.py --evidence_dir <evidence_folder> --output_dir <figure_folder> --T 30 --include-calibrated
+```
+
+The evidence folder contains `ga-eta0.1`, `ga-eta0.5`, `ga-eta0.9`, and the corresponding `salun-eta*` directories, each with `mediation_summary.csv`. Run once per dataset/deletion regime. The script saves twelve separate PDFs, such as `gaussian-GA-eta0.1-full.pdf`, plus a CSV for each panel. Each curve plots signed membership advantage and compliance error against actual mediator noise scale, retaining the conditional confidence intervals. `--include-calibrated` includes all ten policies per panel and uses a horizontal axis that is linear through 0.5 and logarithmic above it; omit the flag for the six baseline/scale policies. Assemble the PDFs as individual LaTeX subfigures.
+
 ## 5. Acknowledgements
 
 Many of the code used in this repository are forked from the [code implementations](https://github.com/K1nght/Unified-Unlearning-w-Remain-Geometry) of [Huang et al.](https://arxiv.org/abs/2409.19732), as noted in our paper. We thank the authors for making their code public.
